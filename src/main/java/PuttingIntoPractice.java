@@ -1,6 +1,7 @@
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class PuttingIntoPractice {
@@ -19,20 +20,25 @@ public class PuttingIntoPractice {
                 new Transaction(alan, 2012, 950)
         );
 
+        List<Trader> traders = getTraders(transactions);
+        System.out.println(traders);
+        boolean isMilan = isTraderFromMilan(transactions);
+        System.out.println(isMilan);
     }
 
     // Find all transactions for the year 2011 and sort them by amount
-    public static List<Transaction> findTransaction(List<Transaction> transactions) {
+    public static List<Transaction> getTransactions(List<Transaction> transactions) {
         return transactions.stream()
-                .filter((Transaction transaction) -> transaction.getYear() == 2011)
-                .sorted(Comparator.comparing(Transaction::getYear))
+                .filter((transaction) -> transaction.getYear() == 2011)
+                .sorted(Comparator.comparing(Transaction::getValue))
                 .toList();
     }
 
     //  Show a list of unique cities in which traders work.
     public static List<String> getUniqueCities(List<Transaction> transactions) {
         return transactions.stream()
-                .map((Transaction transaction) -> transaction.getTrader().getCity())
+                .map(Transaction::getTrader)
+                .map(Trader::getCity)
                 .distinct()
                 .toList();
     }
@@ -41,35 +47,36 @@ public class PuttingIntoPractice {
     public static List<Trader> getTraders(List<Transaction> transactions) {
         return transactions.stream()
                 .map(Transaction::getTrader)
+                .filter(trader -> trader.getCity().equals("Cambridge"))
                 .sorted(Comparator.comparing(Trader::getName))
-                .toList();
+                .collect(Collectors.toList());
+
+
     }
 
     //Return a string with all trader names sorted in alphabetical order.
     public static String getTradersNames(List<Transaction> transactions) {
         return transactions.stream()
-                .map((Transaction transaction) -> transaction.getTrader().getName())
+                .map(Transaction::getTrader)
+                .map(Trader::getName)
                 .sorted(String::compareTo)
                 .collect(Collectors.joining(","));
 
     }
 
     // Find out if there’s any traders from Milan.
-    public static Trader getTraderFromMilan(List<Transaction> transactions) {
+    public static boolean isTraderFromMilan(List<Transaction> transactions) {
         return transactions.stream()
                 .map(Transaction::getTrader)
-                .filter((Trader trader) -> trader.getCity().equals("Milan"))
-                .findAny()
-                .orElse(null);
+                .map(Trader::getCity)
+                .anyMatch(city -> city.equals("Milan"));
     }
 
     // Withdraw all transactions from Cambridge
-    public static int withDrawTransactions(List<Transaction> transactions) {
+    public static Map<Trader, Integer> withDrawTransactions(List<Transaction> transactions) {
         return transactions.stream()
-                .filter((Transaction transaction) -> transaction.getTrader().getCity().equals("Cambridge"))
-                .map(Transaction::getValue)
-                .reduce(Integer::sum)
-                .get();
+                .filter(transaction -> transaction.getTrader().getCity().equals("Cambridge"))
+                .collect(Collectors.groupingBy(Transaction::getTrader, Collectors.summingInt(Transaction::getValue)));
     }
 
     //  What is the maximum amount of all transactions?
@@ -85,4 +92,5 @@ public class PuttingIntoPractice {
                 .min(Comparator.comparing(Transaction::getValue))
                 .get().getValue();
     }
+
 }
